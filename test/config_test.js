@@ -2,6 +2,7 @@ var vows = require('vows');
 var assert = require('assert');
 var config = require('../lib/config');
 var path = require('path');
+var sinon = require('sinon');
 
 var _configLoad = config.load;
 var _configLoadUrl = config.loadUrl;
@@ -123,6 +124,199 @@ vows.describe('config').addBatch({
       assert.equal(current.settings.password, 'pw');
       assert.equal(current.settings.host, 'server.com');
       assert.equal(current.settings.database, 'dbname');
+    }
+  }
+}).addBatch({
+  'loading from an URL and extending it': {
+    topic: function() {
+      var databaseUrl = {
+          'dev': {
+            'url': 'postgres://uname:pw@server.com/dbname',
+            'overwrite': {
+              'ssl': true
+            }
+          }
+      };
+      return config.loadObject(databaseUrl, 'dev');
+    },
+
+    'should export the settings as the current environment': function (config) {
+      assert.isDefined(config.dev);
+    },
+
+    'should export a getCurrent function with all current environment settings': function (config) {
+      assert.isDefined(config.getCurrent);
+      var current = config.getCurrent();
+      assert.equal(current.env, 'dev');
+      assert.equal(current.settings.driver, 'postgres');
+      assert.equal(current.settings.user, 'uname');
+      assert.equal(current.settings.password, 'pw');
+      assert.equal(current.settings.host, 'server.com');
+      assert.equal(current.settings.database, 'dbname');
+      assert.equal(current.settings.ssl, true);
+    }
+  }
+}).addBatch({
+  'loading from an ENV URL and extending it': {
+    topic: function() {
+      process.env.DATABASE_URL = 'postgres://uname:pw@server.com/dbname';
+      var databaseUrl = {
+          'dev': {
+            'ENV': 'DATABASE_URL',
+            'overwrite': {
+              'ssl': true
+            }
+          }
+      };
+      return config.loadObject(databaseUrl, 'dev');
+    },
+
+    'should export the settings as the current environment': function (config) {
+      assert.isDefined(config.dev);
+    },
+
+    'should export a getCurrent function with all current environment settings': function (config) {
+      assert.isDefined(config.getCurrent);
+      var current = config.getCurrent();
+      assert.equal(current.env, 'dev');
+      assert.equal(current.settings.driver, 'postgres');
+      assert.equal(current.settings.user, 'uname');
+      assert.equal(current.settings.password, 'pw');
+      assert.equal(current.settings.host, 'server.com');
+      assert.equal(current.settings.database, 'dbname');
+      assert.equal(current.settings.ssl, true);
+    }
+  }
+}).addBatch({
+  'loading from an ENV URL within the object and extending it': {
+    topic: function() {
+      process.env.DATABASE_URL = 'postgres://uname:pw@server.com/dbname';
+      var databaseUrl = {
+          'dev': {
+            'url': { 'ENV': 'DATABASE_URL' },
+            'overwrite': {
+              'ssl': true
+            }
+          }
+      };
+      return config.loadObject(databaseUrl, 'dev');
+    },
+
+    'should export the settings as the current environment': function (config) {
+      assert.isDefined(config.dev);
+    },
+
+    'should export a getCurrent function with all current environment settings': function (config) {
+      assert.isDefined(config.getCurrent);
+      var current = config.getCurrent();
+      assert.equal(current.env, 'dev');
+      assert.equal(current.settings.driver, 'postgres');
+      assert.equal(current.settings.user, 'uname');
+      assert.equal(current.settings.password, 'pw');
+      assert.equal(current.settings.host, 'server.com');
+      assert.equal(current.settings.database, 'dbname');
+      assert.equal(current.settings.ssl, true);
+    }
+  }
+}).addBatch({
+  'loading from an ENV URL within the object and extending it from the ENV': {
+    topic: function() {
+      process.env.DATABASE_URL = 'postgres://uname:pw@server.com/dbname';
+      var databaseUrl = {
+          'dev': {
+            'url': {
+              'ENV': 'DATABASE_URL',
+              'overwrite': {
+                'ssl': true
+              }
+            }
+          }
+      };
+      return config.loadObject(databaseUrl, 'dev');
+    },
+
+    'should export the settings as the current environment': function (config) {
+      assert.isDefined(config.dev);
+    },
+
+    'should export a getCurrent function with all current environment settings': function (config) {
+      assert.isDefined(config.getCurrent);
+      var current = config.getCurrent();
+      assert.equal(current.env, 'dev');
+      assert.equal(current.settings.driver, 'postgres');
+      assert.equal(current.settings.user, 'uname');
+      assert.equal(current.settings.password, 'pw');
+      assert.equal(current.settings.host, 'server.com');
+      assert.equal(current.settings.database, 'dbname');
+      assert.equal(current.settings.ssl, true);
+    }
+  }
+}).addBatch({
+  'loading from an ENV URL within the object and extending it from the ENV': {
+    topic: function() {
+      process.env.DATABASE_URL = 'postgres://uname:pw@server.com/dbname?ssl=false&testing=false';
+      var databaseUrl = {
+          'dev': {
+            'url': {
+              'ENV': 'DATABASE_URL',
+              'overwrite': {
+                'ssl': true,
+                'cache': false
+              },
+              'addIfNotExist': {
+                'native': true,
+                'testing': true
+              }
+            }
+          }
+      };
+      return config.loadObject(databaseUrl, 'dev');
+    },
+
+    'should export the settings as the current environment': function (config) {
+      assert.isDefined(config.dev);
+    },
+
+    'should export a getCurrent function with all current environment settings and correctly overwrite and add': function (config) {
+      assert.isDefined(config.getCurrent);
+      var current = config.getCurrent();
+      assert.equal(current.env, 'dev');
+      assert.equal(current.settings.driver, 'postgres');
+      assert.equal(current.settings.user, 'uname');
+      assert.equal(current.settings.password, 'pw');
+      assert.equal(current.settings.host, 'server.com');
+      assert.equal(current.settings.database, 'dbname');
+      assert.equal(current.settings.native, true);
+      assert.equal(current.settings.testing, false);
+      assert.equal(current.settings.cache, false);
+      assert.equal(current.settings.ssl, true);
+    }
+  }
+}).addBatch({
+  'should throw on duplicate entries on two levels': {
+    topic: function() {
+      process.env.DATABASE_URL = 'postgres://uname:pw@server.com/dbname';
+      var databaseUrl = {
+          'dev': {
+            'url': {
+              'ENV': 'DATABASE_URL',
+              'overwrite': {
+                'ssl': true
+              }
+            },
+            'overwrite': {
+              'ssl': true
+            }
+          }
+      };
+
+      var configSpy = sinon.spy(config, 'loadObject');
+      this.callback(config.loadObject(databaseUrl, 'dev'), configSpy);
+    },
+
+    'should throw and deliver no config': function (config, spy) {
+      assert(spy.threw());
+      assert.isNotDefined(config.dev);
     }
   }
 }).addBatch({
