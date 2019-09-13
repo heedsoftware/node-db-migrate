@@ -11,7 +11,7 @@
     "sqlite",
     "mysql"
   ],
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "node": ">=0.6.0"
   },
@@ -29,12 +29,15 @@
     "final-fs": "^1.6.0",
     "mkdirp": "~0.5.0",
     "moment": "2.x.x",
+    "mssql": "5.1.0",
     "optimist": "~0.6.1",
     "parse-database-url": "~0.2.2",
     "pkginfo": "~0.3.0"
   },
   "devDependencies": {},
   "peerDependencies": {
-    "mssql": "^3.0.0"
+    "@heed/core-utils.config": "^1.0.0",
+    "mssql": "^5.1.0",
+    "msnodesqlv8": "^0.6.0"
   }
 }
